@@ -15,7 +15,31 @@ class VirtualShellEngine {
 
     fun executeCommand(commandInput: String, isRootShell: Boolean = true): ShellOutput {
         val cmd = commandInput.trim()
-        val resultText = when {
+        if (cmd == "clear") {
+            commandHistory.clear()
+            return ShellOutput("clear", "")
+        }
+
+        // Attempt real host device shell execution if possible
+        var realOutput: String? = null
+        try {
+            val process = if (isRootShell) {
+                Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
+            } else {
+                Runtime.getRuntime().exec(arrayOf("sh", "-c", cmd))
+            }
+            val reader = process.inputStream.bufferedReader()
+            val errorReader = process.errorStream.bufferedReader()
+            val text = reader.readText().trim() + (if (reader.readText().isNotBlank()) "\n" else "") + errorReader.readText().trim()
+            process.waitFor()
+            if (text.isNotBlank() && !text.contains("not found") && !text.contains("Permission denied")) {
+                realOutput = text
+            }
+        } catch (e: Exception) {
+            // Fallback to internal virtual Android 9 environment engine
+        }
+
+        val resultText = realOutput ?: when {
             cmd == "su" || cmd.startsWith("su ") -> {
                 "Root user shell granted (uid=0 root).\n# "
             }
@@ -76,10 +100,6 @@ class VirtualShellEngine {
             }
             cmd == "help" -> {
                 "Built-in DroidVM root shell utilities:\nsu, id, whoami, uname -a, getprop, ls, mount, dmesg, ps, clear, reboot"
-            }
-            cmd == "clear" -> {
-                commandHistory.clear()
-                return ShellOutput("clear", "")
             }
             else -> {
                 "root@droidvm-guest:# $cmd: command executed successfully (exit 0)."
