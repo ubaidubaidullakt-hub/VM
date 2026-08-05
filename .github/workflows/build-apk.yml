@@ -7,9 +7,12 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build APK
+    name: Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -29,9 +32,35 @@ jobs:
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace
 
+      - name: Organize APK Output
+        run: |
+          mkdir -p release-output
+          cp app/build/outputs/apk/debug/app-debug.apk release-output/V-Droid-Engine.apk
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: V-Droid-Engine-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: release-output/V-Droid-Engine.apk
           retention-days: 30
+
+      - name: Create or Update GitHub Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: V-Droid Engine v1.0.0 (Latest APK)
+          body: |
+            ## 📱 V-Droid Engine APK Download
+            
+            Download `V-Droid-Engine.apk` below directly to your Android device to install!
+            
+            ### ⚡ Features:
+            - **Android 9 (Pie)** Virtual Container Engine
+            - **Pre-Rooted** with Magisk & SU binary access
+            - **Multi-App Switching** & Dual Instance Support
+            - **ARM64 / x86_64** Architecture Translation Engine
+          files: release-output/V-Droid-Engine.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
