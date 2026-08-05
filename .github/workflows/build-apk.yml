@@ -14,6 +14,9 @@ jobs:
   build:
     name: Build & Release APK
     runs-on: ubuntu-latest
+    env:
+      GRADLE_OPTS: "-Djava.awt.headless=true"
+      JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
 
     steps:
       - name: Checkout Code
@@ -30,7 +33,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace -Djava.awt.headless=true
 
       - name: Organize APK Output
         run: |
