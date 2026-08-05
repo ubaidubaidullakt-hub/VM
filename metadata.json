@@ -1,0 +1,6 @@
+{
+  "name": "DroidVM Engine",
+  "description": "Virtual Machine emulator hosting rooted Android 9 OS (aarch64) with dual 32/64-bit host compatibility, binary translation, root manager, and guest Android desktop.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
